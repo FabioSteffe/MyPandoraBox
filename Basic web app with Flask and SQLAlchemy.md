@@ -215,5 +215,144 @@ Getting user data from parameters
 username = request.args.get('username')
 ```
 
+Basic todo list app with flask
+```
+# app.py
+
+from flask import Flask, render_template, request, redirect, url_for
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://fsteffenino:@localhost:5432/todoapp'
+db = SQLAlchemy(app)
+
+class Todo(db.Model):
+    __tablename__ = 'todos'
+    id = db.Column(db.Integer, primary_key=True)
+    description = db.Column(db.String(), nullable=False)
+
+    def __reps__(self):
+        return f'<Todo {self.id} {self.description}>'
+
+db.create_all()
+
+@app.route('/todo/create', methods=['POST'])
+def create():
+    desc = request.form.get('description')
+    
+    todo = Todo(description=desc)
+    db.session.add(todo)
+    db.session.commit()
+
+    return redirect(url_for('index'))
+
+
+@app.route('/')
+def index():
+
+    data = Todo.query.all()
+    return render_template('index.html', data=data)
+```
+basic html page
+```
+<div>
+    <head>
+        <title>
+            TO-DO App
+        </title>
+    </head>
+    <body>
+        <form action="/todo/create" method="post">
+            <label for="create-todo">Create todo</label>
+            <input type="text" value="" id="desc" name="description" />
+            <input type="submit" value="Submit" />
+         </form>
+        <ul>
+            {% for d in data %}
+            <li>
+                {{ d.description }}
+            </li>
+            {% endfor %}
+        </ul>
+        
+    </body>
+</div>
+```
+
+We can request data from server synchronously or asynchronously.  
+AJAX is used for async requests.  
+- XMLHttpRequest
+- Fetch (modern)
+  - `fetch(<url-route>, <object of request parameters>)`
+
+```
+fetch( '/request', {
+  method: 'POST',
+  body: JSON.stringify({
+    'description' : 'bla bla'
+  }),
+  headers: {
+    'content-type' : 'application/json'
+  }
+});
+```
+
+
+update in sqlalchemy:
+```
+user = User.query.get(id)
+user.name = 'gianni'
+db.session.commit()
+```
+
+delete in sqlalchemy:
+```
+todo = Todo.query.get(todo_id) 
+db.session.delete(todo) # or...
+Todo.query.filter_by(id=todo_id).delete()
+db.session.commit()
+```
+
+
+
+
+
+
+
+###### Schema migration in flask app
+
+```
+migrations/
+  add_tables_0001.py
+  add_column_to_todo_0002.py
+```
+- db migrate : migration script
+- db upgrade : apply migration
+- db downgrade : rollback
+
+db.create_all() is not used when we are using migrations.  
+
+libraries doing the job:
+- Flask-Migrate(flask_migrate)
+- Flask-Script(flask_script)
+
+- `flask db init` initialise migration dir
+- `flask db migrate` creates migration files - to be run every time we modify the model
+- `flask db upgrade` upgrade the db
+- `flask db downgrade` rollback the changes
+
+```
+app = Flask(__name__)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://fsteffenino:@localhost:5432/todoapp'
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
+```
+
+
+
+
 
 
