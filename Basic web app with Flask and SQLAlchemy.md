@@ -314,8 +314,59 @@ Todo.query.filter_by(id=todo_id).delete()
 db.session.commit()
 ```
 
+Relationship in SQLAlchemy:
+```
+class Parent(db.Model):
+  id = ...
+  name = ...
+  children = db.relationship('Child', 
+                              backref='the_parent',
+                              lazy=True
+                              collection_class = list, # dictionary, set
+                              cascade = 'save-update' # all, delete-orphan
+                              )
+```
 
+SQLAlchemy is joining tables automatically, but when?   
+- Lazy
+  - only when needed 
+  - when `child.the_parent` is called
+  - lazy='select'
+- Eager
+  - all join done at once in a giant expensive operation
+  - lazy='joined'
 
+Foreign key in child:
+```
+class Parent(db.Model):
+  __tablename__ = 'some_parents'
+  id = db.Column(db.Integer, primary_key=True)
+  ...
+
+class Child(db.Model):
+  id = ...
+  name = ...
+  some_parent_id = db.Column(db.Integer, db.ForeignKey('some_parents.id'),
+                             nullable=False)
+```
+
+Many to Many relation:
+```
+order_items = db.Table('order_items',
+    db.Column('order_id', db.Integer, db.ForeignKey('order.id'), primary_key=True),
+    db.Column('product_id', db.Integer, db.ForeignKey('product.id'), primary_key=True)
+)
+
+class Order(db.Model):
+  id = db.Column(db.Integer, primary_key=True)
+  status = db.Column(db.String(), nullable=False)
+  products = db.relationship('Product', secondary=order_items,
+      backref=db.backref('orders', lazy=True))
+
+class Product(db.Model):
+  id = db.Column(db.Integer, primary_key=True)
+  name = db.Column(db.String(), nullable=False)
+```
 
 
 
@@ -350,6 +401,13 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 ```
+
+
+
+
+
+
+
 
 
 
