@@ -1,0 +1,145 @@
+<div>
+    <head>
+        <title>
+            TO-DO App
+        </title>
+        <style>
+            .hidden {
+                display: none;
+            }
+            ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                width: 300px;
+            }
+            li {
+                clear: both;
+            }
+            li button {
+                -webkit-appearance: none;
+                border: none;
+                outline: none;
+                color: red;
+                float: right;
+                cursor: pointer;
+                font-size: 20px;
+            }
+            .cat-wrapper, .data-wrapper {
+                display: inline-block;
+                vertical-align: top;
+            }
+        </style>
+    </head>
+    <body>
+        <div class='cat-wrapper'>
+            <ul id='lists'>
+                {% for cat in category %}
+                <li>
+                    <a href="/lists/{{ cat.id }}"">{{ cat.name }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class='data-wrapper'>
+            <h4> {{ active.name }}</h4>
+            <form id='form' >
+                <label for="create-todo">Create todo</label>
+                <input type="text" value="" id="desc" name="description" />
+                <input type="submit" value="Submit" />
+            </form>
+            <div id='error' class='hidden' >UHO! Something went wrong</div>
+            <ul id='todos'>
+                {% for d in data %}
+                <li>
+                    <input class="check-completed" data-id="{{ d.id }}" type="checkbox" {% if d.completed %} checked {% endif %} />
+                    {{ d.description }}
+                    <button class="delete-item" data-id="{{ d.id }}" >&cross;</button>
+                  </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <script>
+            const checkboxes = document.querySelectorAll('.check-completed');
+            for (let i = 0; i < checkboxes.length; i++) {
+                const checkbox = checkboxes[i];
+                checkbox.onchange = function(e) {
+                    const newCompleted = e.target.checked;
+                    const todoId = e.target.dataset['id'];
+                    fetch('/todo/' + todoId + '/set-completed', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                        'completed': newCompleted
+                        }),
+                        headers: {
+                        'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(function() {
+                        document.getElementById('error').className = 'hidden';
+                    })
+                    .catch(function() {
+                        document.getElementById('error').className = '';
+                    })
+                }
+            }
+            const buttons = document.querySelectorAll('.delete-item');
+            for (let i = 0; i < buttons.length; i++) {
+                const button = buttons[i];
+                button.onclick = function(e) {
+                    const todoId = e.target.dataset['id'];
+                    fetch('/todo/' + todoId , {
+                        method: 'DELETE'
+                    })
+                    .then(function() {
+                        const item = e.target.parentElement;
+                        item.remove();
+                        document.getElementById('error').className = 'hidden';
+                    })
+                    .catch(function() {
+                        document.getElementById('error').className = '';
+                    })
+                }
+            }
+            document.getElementById('form').onsubmit = function(e) {
+                e.preventDefault();
+                fetch('/todo/create', {
+                    method : 'POST',
+                    body : JSON.stringify({
+                        'description' : document.getElementById('desc').value
+                    }),
+                    headers : {
+                        'content-type' : 'application/json'
+                    }
+                })
+                .then(function(response){
+                    return response.json();
+                })
+                .then(function(jsonResponse){
+                    console.log(jsonResponse);
+                    const li = document.createElement('li');
+                    const checkbox = document.createElement('input');
+                    checkbox.className = 'check-completed';
+                    checkbox.type = 'checkbox';
+                    checkbox.setAttribute('data-id', jsonResponse.id);
+                    li.appendChild(checkbox);
+
+                    const text = document.createTextNode(' ' + jsonResponse.description);
+                    li.appendChild(text);
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-item';
+                    deleteBtn.setAttribute('data-id', jsonResponse.id);
+                    deleteBtn.innerHTML = '&cross;';
+                    li.appendChild(deleteBtn);
+
+                    document.getElementById('todos').appendChild(li)
+                    document.getElementById('error').className = 'hidden';
+                })
+                .catch(function(){
+                    document.getElementById('error').className = '';
+                })
+            }
+        </script>
+    </body>
+</div>
