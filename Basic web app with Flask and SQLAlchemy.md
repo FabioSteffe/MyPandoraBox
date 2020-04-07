@@ -314,7 +314,28 @@ Todo.query.filter_by(id=todo_id).delete()
 db.session.commit()
 ```
 
-Relationship in SQLAlchemy:
+##### Relationship in SQLAlchemy.  
+
+SQLAlchemy configures the settings between model relationships once, and generates JOIN statements for us whenever we need them.
+- db.relationship is an interface offered in SQLAlchemy to provide and configure a mapped relationship between two models.
+- db.relationship is defined on the parent model, and it sets:
+  - the name of its children (e.g. children), for example parent1.children
+  - the name of a parent on a child using the backref, for example child1.my_amazing_parent
+
+db.relationship
+- Allows SQLAlchemy to identity relationships between models
+- Links relationships with backrefs (child1.some_parent)
+- Configures relationship dynamics between parents and children, including options like `lazy`, `collection_class`, and `cascade`
+
+- db.relationship does not set up foreign key constraints for you. We need to add a column, some_parent_id, on the child model that has a foreign key constraint
+- Whereas we set db.relationship on the parent model, we set the foreign key constraint on the child model.
+- A foreign key constraint prefers referential integrity from one table to another, by ensuring that the foreign key column always maps a primary key in the foreign table.
+
+`db.ForeignKey`
+- Option in db.column to specify a foreign key constraint, referring to the primary key of the other table / model
+- Gets defined on the Child model
+
+
 ```
 class Parent(db.Model):
   id = ...
